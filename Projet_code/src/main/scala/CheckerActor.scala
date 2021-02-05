@@ -32,6 +32,10 @@ class CheckerActor (val id:Int, val terminaux:List[Terminal], electionActor:Acto
 
              // Je m'ajoute pour signaler aux autre nodes que je suis en vie (Initialisation)
              this.nodesAlive = this.nodesAlive:::List(id)
+
+             //J'initialise le leader
+             this.leader = 0
+
         }
 
         // A chaque fois qu'on recoit un Beat : on met a jour la liste des nodes
@@ -47,8 +51,10 @@ class CheckerActor (val id:Int, val terminaux:List[Terminal], electionActor:Acto
           }
 
         case IsAliveLeader (nodeId) => {
-             println("Je suis le leader (Node "+nodeId+")")
-             //leader = nodeId
+             if(!this.nodesAlive.contains(nodeId))
+                    this.nodesAlive = this.nodesAlive:::List(nodeId)
+             println("Je suis le leader ("+nodeId+")")
+            
         }
 
         // A chaque fois qu'on recoit un CheckerTick : on verifie qui est mort ou pas
@@ -62,14 +68,22 @@ class CheckerActor (val id:Int, val terminaux:List[Terminal], electionActor:Acto
                println("CHECKKKKK")
                this.nodesAlive = List()
                 terminaux.foreach(n => {
-                   
-                   if( n.id != id){
-                         val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node")
+
+                    val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node")
+                    if(n.id == leader){
+                              remote ! IsAliveLeader (n.id)
+                    }
+                    if( n.id != id){
                          remote ! IsAlive (id)
                    }
                   
                     
                })
+               println(leader)
+               if(!this.nodesAlive.contains(leader)){
+                    print("OHHHH ------> "+this.nodesAlive)
+                    println("Ancien Leader : "+leader+" Election en cours..")
+               }
               
           }
       }

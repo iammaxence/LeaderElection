@@ -12,6 +12,12 @@ sealed trait AliveMessage
 case class IsAlive (id:Int) extends AliveMessage
 case class IsAliveLeader (id:Int) extends AliveMessage
 
+// Ajout de ma part
+// abstract class LeaderAlgoMessage
+// case class ALG (list:List[Int], nodeId:Int) extends LeaderAlgoMessage
+// case class AVS (list:List[Int], nodeId:Int) extends LeaderAlgoMessage
+// case class AVSRSP (list:List[Int], nodeId:Int) extends LeaderAlgoMessage
+
 class Node (val id:Int, val terminaux:List[Terminal]) extends Actor {
      
      // Les differents acteurs du systeme
@@ -76,10 +82,27 @@ class Node (val id:Int, val terminaux:List[Terminal]) extends Actor {
                checkerActor ! IsAlive (id)
           }
 
-          case IsAliveLeader (id) => 
+          case IsAliveLeader (id) => {
+               checkerActor ! IsAliveLeader (id)
+          }
 
           // Message indiquant que le leader a change
-          case LeaderChanged (nodeId) => 
+          case LeaderChanged (nodeId) =>  {
+
+          }
+
+          case ALG(nodes:List[Int],init:Int) => 
+          {
+               
+               electionActor ! ALG (nodes, init)
+          }
+
+          case AVS(nodes:List[Int],init:Int) =>
+          {
+               electionActor ! AVS (nodes, init)
+          }
+
+          
 
      }
 

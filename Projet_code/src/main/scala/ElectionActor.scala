@@ -26,6 +26,9 @@ class ElectionActor (val id:Int, val terminaux:List[Terminal]) extends Actor {
      var candPred:Int = -1
      var status:NodeStatus = new Passive ()
 
+     //Nodes suiv (Les nodes connaissent leur successeur )
+     var succ:Int = (id+1) % nodesAlive.size
+
      def receive = {
 
           // Initialisation
@@ -45,14 +48,139 @@ class ElectionActor (val id:Int, val terminaux:List[Terminal]) extends Actor {
                self ! Initiate
           }
 
-          case Initiate => 
+          case Initiate => {
+               //Set status to candidate
+               this.status = new Candidate ()
 
-          case ALG (list, init) => 
+               //On récupère la node voisine à init (son successeur)
+               //succ = (init+1) % nodes.size
 
-          case AVS (list, j) => 
+               //Send message to successor
+               terminaux.foreach(n => {
 
-          case AVSRSP (list, k) => 
+                    if(n.id == succ){
+                         val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node")
+                         remote ! ALG(this.nodesAlive,id)
+                    }
+               })
+
+          }
+
+          case ALG (list, init) => {
+               if (status == Passive ()){
+                    this.status = new Dummy ()
+                    //Send message to successor
+                    terminaux.foreach(n => {
+
+                         if(n.id == succ){
+                              val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node")
+                              remote ! ALG(this.nodesAlive,init)
+                         }
+                    })
+               }
+
+               if(status == Candidate ()){
+                    this.candPred = init
+
+                    if(id > init){
+                        
+                        if(this.candSucc == -1){
+                             status = new Waiting ()
+
+                             //Send message to init
+                              terminaux.foreach(n => {
+
+                                   if(n.id == init){
+                                        val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node")
+                                        remote ! AVS(this.nodesAlive,id)
+                                   }
+                              })
+
+                        }
+                        else {
+                             //Send message to successor
+
+                              terminaux.foreach(n => {
+
+                                   if(n.id == candSucc){
+                                        val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node")
+                                        remote ! AVSRSP(this.nodesAlive,this.candPred)
+                                   }
+                              })
+                              status = new Dummy ()
+                        }
+                    }
+               }
+
+               if( init == id)
+                    status = new Leader ()
+          }
+
+          case AVS (list, j) => {
+               if (status == Candidate ()) {
+                    if(this.candPred == -1){
+                         this.candPred = j
+                    }
+                    else {
+                         //Send message to successor
+                         terminaux.foreach(n => {
+
+                              if(n.id == j){
+                                   val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node")
+                                   remote ! AVSRSP(this.nodesAlive,this.candPred)
+                              }
+                         })
+                         status = new Dummy ()
+                    }
+               }
+               else {
+                    this.candSucc = j
+               }
+          }
+
+          case AVSRSP (list, k) => {
+               
+               if(status == Waiting ()){
+
+                    if(id == k){
+                         status = new Leader ()
+                    }
+                    else {
+                         this.candPred = k
+
+                         if(candSucc == -1){
+
+                              if(k < id){
+                                   status = new Waiting ()
+                                   //Send message to successor
+                                   terminaux.foreach(n => {
+
+                                        if(n.id == k){
+                                             val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node")
+                                             remote ! AVSRSP(this.nodesAlive,id)
+                                        }
+                                   })
+                              }
+
+                         }
+                         else {
+                              status = new Dummy ()
+                              //Send message to successor
+                              terminaux.foreach(n => {
+
+                                   if(n.id == this.candSucc){
+                                        val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node")
+                                        remote ! AVSRSP(this.nodesAlive,k)
+                                   }
+                              })
+                         }
+                    }
+               }
+
+          }
 
      }
+
+     
 
 }
