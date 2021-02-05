@@ -11,6 +11,7 @@ import akka.util.Timeout
 
 import java.net._
 
+
 sealed trait BeatMessage
 case class Beat (id:Int) extends BeatMessage
 case class BeatLeader (id:Int) extends BeatMessage
@@ -37,7 +38,13 @@ class BeatActor (val id:Int) extends Actor {
         }
 
         // Objectif : prevenir tous les autres nodes qu'on est en vie
-        case BeatTick => father ! Beat (id)
+        case BeatTick => {
+           
+          context.system.scheduler.schedule(3 seconds, 3 seconds) {
+                    father ! Beat(id)
+          }
+          
+        }
 
         case LeaderChanged (nodeId) => 
 

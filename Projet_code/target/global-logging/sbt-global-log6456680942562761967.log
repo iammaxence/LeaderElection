@@ -1,0 +1,13 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(run 1, Some(674332bb-19d7-4be2-be3d-3ab38b386b1a), Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: Compile / run[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 1 Scala source to /home/max/PPC/Projet_code/Projet_code/target/scala-2.11/classes ...[0m
+[0m[[0m[31merror[0m] [0m[0m/home/max/PPC/Projet_code/Projet_code/src/main/scala/Node.scala:39:55: type mismatch;[0m
+[0m[[0m[31merror[0m] [0m[0m found   : List[Any][0m
+[0m[[0m[31merror[0m] [0m[0m required: List[akka.actor.ActorSelection][0m
+[0m[[0m[31merror[0m] [0m[0m                         this.allNodes = this.allNodes:::List(this.id)[0m
+[0m[[0m[31merror[0m] [0m[0m                                                      ^[0m
+[0m[[0m[31merror[0m] [0m[0mone error found[0m
+[0m[[0m[31merror[0m] [0m[0m(Compile / [31mcompileIncremental[0m) Compilation failed[0m
+[0m[[0m[31merror[0m] [0m[0mTotal time: 4 s, completed 15 janv. 2021 14:53:37[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(shell, None, None)[0m

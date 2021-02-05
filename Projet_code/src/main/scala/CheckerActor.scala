@@ -8,6 +8,7 @@ import akka.actor._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
+
 abstract class Tick
 case class CheckerTick () extends Tick
 
@@ -22,25 +23,57 @@ class CheckerActor (val id:Int, val terminaux:List[Terminal], electionActor:Acto
 
      var leader : Int = -1
 
+     
     def receive = {
 
          // Initialisation
         case Start => {
              self ! CheckerTick
+
+             // Je m'ajoute pour signaler aux autre nodes que je suis en vie (Initialisation)
+             this.nodesAlive = this.nodesAlive:::List(id)
         }
 
         // A chaque fois qu'on recoit un Beat : on met a jour la liste des nodes
         case IsAlive (nodeId) => {
-             nodesAlive = nodeId::nodesAlive
-        }
+               
+               if(!this.nodesAlive.contains(nodeId))
+                    this.nodesAlive = this.nodesAlive:::List(nodeId)
+               if(!this.nodesAlive.contains(id))
+                    this.nodesAlive = this.nodesAlive:::List(id)
 
-        case IsAliveLeader (nodeId) => 
+               print("Alives Nodes : "+this.nodesAlive.sorted+"\n")
+               
+          }
+
+        case IsAliveLeader (nodeId) => {
+             println("Je suis le leader (Node "+nodeId+")")
+             //leader = nodeId
+        }
 
         // A chaque fois qu'on recoit un CheckerTick : on verifie qui est mort ou pas
         // Objectif : lancer l'election si le leader est mort
-        case CheckerTick => println("Alive nodes :  " + nodesAlive)
+        case CheckerTick => {
+          //Il faut checker qui est mort en plus du leader
+          var tmp:List[Int] = List()
+          
+          context.system.scheduler.schedule(7 seconds, 7 seconds) {
 
+               println("CHECKKKKK")
+               this.nodesAlive = List()
+                terminaux.foreach(n => {
+                   
+                   if( n.id != id){
+                         val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node")
+                         remote ! IsAlive (id)
+                   }
+                  
+                    
+               })
+              
+          }
+      }
+      
     }
-
 
 }
